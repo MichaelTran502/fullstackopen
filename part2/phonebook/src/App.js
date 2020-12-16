@@ -29,7 +29,19 @@ const App = () => {
     if (persons.filter(person =>
       person.name.toLowerCase() === newPerson.name.toLowerCase()
       ).length > 0) {
-        alert(`${newName} is already added to the phonebook`)
+        const person = persons.find(n => n.name.toLowerCase() === newPerson.name.toLowerCase());
+        if (window.confirm(`${person.name} is already added to the phonebook, replace the old number with a new one?`)) {
+          personService
+          .update(person.id, newPerson)
+          .then(returnedPerson => {
+            setPersons(persons.map(p => p.id !== person.id ? p : returnedPerson));
+            })
+            .catch(error => {
+              console.log(error);
+            })
+            setNewName('');
+            setNewNumber('');
+        }
     } else {
       personService.create(newPerson)
         .then(returnedPerson =>  setPersons(persons.concat(returnedPerson)))
@@ -56,7 +68,22 @@ const App = () => {
   const filteredPersons = persons.filter(person => 
     person.name.toLowerCase().includes(filter.toLowerCase()));
   
+  const handleDelete = (id) => {
+    const person = persons.find(n => n.id === id);
 
+    if (window.confirm(`Delete ${person.name}?`)) {
+      personService.remove(id)
+        .then(deletedPerson => {
+          console.log(deletedPerson)
+          setPersons(persons.filter(n => n.id !== id))
+        })
+        .catch(error => {
+          alert(`the person ${person.name} was already deleted from the server`)
+          setPersons(persons.filter(n => n.id !== id))
+        })
+    }
+
+  }
 
   return (
     <div>
@@ -71,7 +98,7 @@ const App = () => {
         handleNewNumber={handleNewNumber}
       />
       <h2>Numbers</h2>
-      <Persons persons={filteredPersons} />
+      <Persons persons={filteredPersons} deleteButton={handleDelete}/>
     </div>
   )
 }
